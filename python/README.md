@@ -1,5 +1,5 @@
 Python codes for MFCM
-#####################
+=====================
 
 This folder contains python codes to perform the MFCM bias field correction method.
 
@@ -12,7 +12,7 @@ To use the data generation scripts that are shipped with this code, you also nee
     conda install -c astra-toolbox astra-toolbox
 
 Content
-#######
+=======
 
 The files are as follows:
 

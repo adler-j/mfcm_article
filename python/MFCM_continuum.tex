@@ -1,0 +1,262 @@
+% This is LLNCS.DEM the demonstration file of
+% the LaTeX macro package from Springer-Verlag
+% for Lecture Notes in Computer Science,
+% version 2.4 for LaTeX2e as of 16. April 2010
+%
+\documentclass{llncs}
+%
+
+\usepackage{makeidx}  % allows for indexgeneration
+\usepackage{graphicx}
+\usepackage{subcaption}
+\captionsetup{compatibility=false}
+\usepackage{hyperref}
+\usepackage[numbered]{bookmark}
+\usepackage{amsmath}
+\usepackage{amssymb}
+%
+\usepackage{multirow} % ok
+\begin{document}
+%
+\mainmatter              % start of the contributions
+%
+\title{MFCM with the math done in continuum and with smoothness criterion on $b$}
+%
+\titlerunning{MFCM}  % abbreviated title (for running head)
+%                                     also used for the TOC unless
+%                                     \toctitle is used
+%
+\author{Awais Ashfaq\inst{1} and Jonas Adler\inst{2} }
+%
+\authorrunning{Awais et al.} % abbreviated author list (for running head)
+%
+%%%% list of authors for the TOC (use if author list has to be modified)
+\tocauthor{Awais Ashfaq and Jonas Adler}
+%
+\institute{KTH Royal Institute of Technology and Halmstad University
+\\
+\and
+KTH Royal Institute of Technology and Elekta Instrument AB
+}
+
+\maketitle              % typeset the title of the contribution
+
+\section{Introduction}
+
+This follows the paper "A modified fuzzy C means algorithm for shading correction in craniofacial CBCT images" but performs the deriviations in continuum and adds further regularity conditions on the bias field.
+
+\section{Bias-field estimation in continuum} 
+The observed CBCT image is modelled as a sum of true signal and a spatially slow varying bias-field.
+\begin{equation}
+\label{eq:1}
+y(t) = x(t) + b(t)  \quad \forall t \in \Omega
+\end{equation}
+where
+\\
+$\Omega \subset \mathbb{R}^n$ is the domain of the image
+\\
+$y$ is the observed intensity
+\\
+$x$ is the true intensity
+\\
+$b$ is the bias intensity
+\\
+\\
+The FCM objective function is given by
+\begin{equation}
+J = \sum_{i=1}^{I} \int_{\Omega} {\mu_{i}^m(x)} (x(t)-c_i)^2 dt
+\label{eq:FCM}
+\end{equation}
+where \newline
+$I$ is the number of clusters
+\\
+$c_i$ is the center of the $i^{th}$ cluster
+\\
+$\mu_{i}(t)$ is the degree of membership of point $t$ in the $i^{th}$ cluster and $\mu_{in}\:\in \: [0\:,\:1]$. 
+\\
+$m$ is the level of fuzziness. $m \in (1 \:, \:\infty)$. $m=1$ would imply a strict partitioning between clusters. Higher values of $m$ imply smaller membership values and hence fuzzier clusters. For a given data point, sum of the membership values for every cluster is normalized to 1.
+\begin{equation}
+\label{eq:Constraint1}
+ \sum_{i=1}^{I}{\mu_{i}(t)}=1 \: \:\:\: \forall \:t \in \Omega
+\\
+\end{equation}
+\\
+The modified FCM objective function, following the idea as proposed by Ahmed et al is given by
+\begin{equation}
+\label{eq:MFCM}
+J^* = \sum_{i=1}^{I} \int_\Omega {\mu_{i}^m}(t) [C_k (x - c_i)^2](t) dt
+\end{equation}
+where $C_k x$ is the convolution of $x$ with $k$, where $k$ controls the neighbourhood influence.
+\[
+	C_k x = \int x(t - \tau) k(\tau) d\tau
+\]
+\\
+In CBCT acquisition, intensity values correspond to attenuation coefficients of the material being scanned which in turn roughly correspond to the material's density. It is thus important to have a piece-wise smooth solution while keeping the true intensity values $x$ close to the observed intensity values $y$ (see Eq. \ref{eq:1}). In order to preserve this information, we assume that the bias-field has zero mean.
+\begin{equation}
+\label{eq:Constraint2}
+ \int_\Omega b(t) dt = \int_\Omega y(t) - x(t) dt = 0
+\\
+\end{equation}
+\\
+The task of minimizing $J^*$ in Eq. \ref{eq:MFCM} with constraints given by Eq. \ref{eq:Constraint1} and \ref{eq:Constraint2} is a nonlinear optimization problem. Mathematically,
+\begin{equation*}
+\begin{aligned}
+\underset{\mu,c,b}{\text{minimize\:\:\:\:}}
+& J^* \\
+\text{subject to} &
+\sum_{i=1}^{I}{\mu_{i}(t)}=1 \: \:\:\: \forall \: t \in \Omega
+\\
+&  \int_\Omega (y(t) - x(t)) dt = 0
+\end{aligned}
+\end{equation*} 
+
+\subsection{Solution via coordinate descent}
+
+To minimize $J^*$ we form the Lagrangian
+\begin{equation}
+\mathcal{L} =
+\sum_{i=1}^{I} \int_\Omega {\mu_{i}^m}(t) [C_k (x - c_i)^2](t) dt
++
+\int_\Omega \gamma(t) \left(1 - \sum_{i=1}^{I} \mu_i(t)\right) dt
++
+\lambda \int_\Omega (y(t) - x(t)) dt
+\end{equation}
+which we can find the explicit gradient of by straightforward computation
+\begin{align*}
+\nabla_{\mu_i(t)} \mathcal{L}
+=&\ 
+m \mu_{i}^{m-1}(t) [C_k (x - c_i)^2](t)
+-
+\gamma(t)
+\\
+\nabla_{c_i} \mathcal{L}
+=&\
+2 \int_\Omega [C_k^* \mu_{i}^m](t) (c_i - x(t)) dt
+\\
+\nabla_{x(t)} \mathcal{L}
+=&\
+2 \sum_{i=1}^{I} [C_k^* \mu_{i}^m](t) (x(t) - c_i) - \lambda
+\\
+\nabla_{\gamma(t)} \mathcal{L}
+=&\
+\left(1 - \sum_{i=1}^{I} \mu_i(t)\right)
+\\
+\nabla_{\lambda} \mathcal{L}
+=&\
+\int_\Omega (y(t) - x(t)) dt
+\end{align*}
+where $C_k^*$ is the adjoint of $C_k$. If $k$ is symmetric, $C_k^* = C_k$.
+For an optimal solution, all of these derivatives would be simultaneously zero. However, finding such a point is non-trivial and we resort to coordinate descent to find an optimal solution.
+Solving for $\mu_{i}(t)$
+\[
+	\mu_{i}(t)=\left(\frac{\gamma(t)}{m[C_k (x - c_i)^2](t)}\right)^\frac{1}{m-1}
+\]
+Using the constraint in Eq. \ref{eq:Constraint1} we calculate $\gamma(t)$ as
+\[
+	\gamma(t)=\frac{m}{\left(\sum_{j=1}^I \left(\frac{1}{[C_k (x - c_i)^2](t)}\right)^\frac{1}{m-1}\right)^{m-1}}
+\]
+Update equation for membership matrix $\mu$ is given by
+\begin{equation}
+\label{eq:muUpdate}
+\mu_{i}(t)=\frac{1}{\sum_{j=1}^I \left(\frac{[C_k (x - c_i)^2](t)}{[C_k (x - c_j)^2](t)}\right)^\frac{1}{m-1}}
+\end{equation}
+Update equation for cluster center $c$ is given by
+\begin{equation}
+\label{eq:ciUpdate}
+c_i=
+\frac{\int_\Omega [C_k^* \mu_{i}^m](t) x(t) dt}{\int_\Omega [C_k^* \mu_{i}^m](t)dt}
+\end{equation}
+Update equation for $x$ is given by
+\begin{equation}
+\label{eq:bkUpdate}
+x(t)=
+\frac{\sum_{i=1}^{I} c_i [C_k^* \mu_{i}^m](t) + \lambda}
+{\sum_{i=1}^{I} [C_k^* \mu_{i}^m](t)}
+\end{equation}
+and $\lambda$ can be evaluated using constraint Eq. \ref{eq:Constraint2}
+\begin{equation}
+\lambda = 
+\frac{\int_\Omega 
+	\left(
+	y(t)
+	-
+	\frac{\sum_{i=1}^{I} c_i [C_k^* \mu_{i}^m](t)}
+	{\sum_{i=1}^{I} [C_k^* \mu_{i}^m](t)}
+	\right)
+	dt}{\int_\Omega
+	\left(
+	\sum_{i=1}^{I} [C_k^* \mu_{i}^m](t)
+	\right)^{-1}
+	dt}
+\end{equation}
+
+\section{Penalized square of bias}
+
+We here penalize on the square of the bias instead of using the zero mean condition \ref{eq:Constraint2}, forcing it to be "low"
+
+\begin{equation}
+J^* = \sum_{i=1}^{I} \int_\Omega {\mu_{i}^m}(t) [C_k (x - c_i)^2](t) dt + \lambda \int_\Omega (y(t) - x(t))^2 dt
+\end{equation}
+where $\lambda$ is a regularization constant that can be selected. To solve this, we form the lagrangian
+\begin{multline}
+\mathcal{L} =
+\sum_{i=1}^{I} \int_\Omega {\mu_{i}^m}(t) [C_k (x - c_i)^2](t) dt
++\\
+\lambda \int_\Omega (y(t) - x(t))^2 dt
++
+\int_\Omega \gamma(t) \left(1 - \sum_{i=1}^{I} \mu_i(t)\right) dt
+\end{multline}
+which we can find the explicit gradient of. 
+All terms become the same as above, except the lambda derivative, which is no longer needed and $x$ which is given by
+\begin{align*}
+\nabla_{x(t)} \mathcal{L}
+=&\
+2 \sum_{i=1}^{I} [C_k^* \mu_{i}^m](t) (x(t) - c_i) + 2 \lambda (x(t) - y(t))
+\end{align*}
+The updates are also the same as above, except for $x$
+\begin{equation}
+x(t)=
+\frac{\sum_{i=1}^{I} c_i [C_k^* \mu_{i}^m](t) + \lambda y(t)}
+{\sum_{i=1}^{I} [C_k^* \mu_{i}^m](t) + \lambda}
+\end{equation}
+
+\section{Penalized square of gradient of bias}
+
+We here additionally penalize on the square of the gradient of the bias, forcing it to be "low", so called Tichonov regularization
+\begin{equation}
+J^* = \sum_{i=1}^{I} \int_\Omega {\mu_{i}^m}(t) [C_k (x - c_i)^2](t) dt 
++ 
+\lambda_1 \int_\Omega (y(t) - x(t))^2 dt
++
+\lambda_2 \int_\Omega ([\nabla (y - x)](t))^2 dt
+\end{equation}
+To solve this we form the lagrangian
+\begin{multline}
+\mathcal{L} =
+\sum_{i=1}^{I} \int_\Omega {\mu_{i}^m}(t) [C_k (x - c_i)^2](t) dt
++\\
+\lambda_1 \int_\Omega (y(t) - x(t))^2 dt
++
+\lambda_2 \int_\Omega ([\nabla (y - x)](t))^2 dt
++
+\int_\Omega \gamma(t) \left(1 - \sum_{i=1}^{I} \mu_i(t)\right) dt
+\end{multline}
+which we can find the explicit gradient of. 
+All terms become the same as above, except for $x$ which is given by
+\begin{align*}
+\nabla_{x(t)} \mathcal{L}
+=&\
+2 \sum_{i=1}^{I} [C_k^* \mu_{i}^m](t) (x(t) - c_i) + \lambda_1 (x(t) - y(t)) - 2 \lambda_2 [\Delta (x - y)](t)
+\end{align*}
+where $\Delta = -\nabla^T \nabla$ is the Laplacian operator.
+The updates are also the same as above, except for $x$ we get a system of equations
+\begin{equation}
+\sum_{i=1}^{I} [C_k^* \mu_{i}^m](t) x(t) + \lambda_1 x(t) - \lambda_2 [\Delta x](t)
+=
+\sum_{i=1}^{I} c_i [C_k^* \mu_{i}^m](t) + \lambda_1 y - \lambda_2 [\Delta y](t)
+\end{equation}
+We can solve it using the CG method (\texttt{conjugate\_gradient} in ODL).
+
+\end{document}
+
+

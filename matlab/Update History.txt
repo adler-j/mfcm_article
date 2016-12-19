@@ -1,0 +1,7 @@
+May 16, 2016. 
+The functionality of debug flag was added in runMe and a new imshow3d function was added to view the bias field at every iteration
+The imgaussfilt function was replaced with imgaussian
+May 19, 2016.
+Line 48 in the function eq4 has been updated.It should be Nr (Neighborhood window) and not numel(B)
+May 23, 2016
+Bug fixed in Line 22 of eq4 Function. The square was missing!
